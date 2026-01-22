@@ -90,6 +90,18 @@ def map_json_type_to_rust(schema: dict, name: str = "") -> tuple[str, bool, str 
             else:
                 # 无properties的object用serde_json::Value
                 return ("Vec<serde_json::Value>", True, "serde_json::Value")
+        elif item_type == "array":
+            # 嵌套数组：递归处理内部数组
+            inner_items = items.get("items", {})
+            inner_item_type = inner_items.get("type", "string")
+            if inner_item_type == "object" and inner_items.get("properties"):
+                struct_name = f"{name}Item"
+                return (f"Vec<Vec<{struct_name}>>", True, struct_name)
+            elif inner_item_type == "object":
+                return ("Vec<Vec<serde_json::Value>>", True, "serde_json::Value")
+            else:
+                inner_type, _, _ = map_json_type_to_rust(inner_items)
+                return (f"Vec<Vec<{inner_type}>>", True, inner_type)
         else:
             inner_type, _, _ = map_json_type_to_rust(items)
             return (f"Vec<{inner_type}>", True, inner_type)
@@ -202,8 +214,13 @@ class ApiDocParser:
         # 如果是对象数组，解析内部结构
         if is_vec and json_type == "array":
             items = schema.get("items", {})
-            if items.get("type") == "object":
+            if items.get("type") == "object" and items.get("properties"):
                 self._parse_nested_struct(vec_item_type, items)
+            elif items.get("type") == "array":
+                # 嵌套数组：解析内部数组的元素
+                inner_items = items.get("items", {})
+                if inner_items.get("type") == "object" and inner_items.get("properties"):
+                    self._parse_nested_struct(vec_item_type, inner_items)
         # 如果是单个对象，也要解析
         elif json_type == "object" and schema.get("properties"):
             struct_name = sanitize_struct_name(f"{parent_struct}{to_pascal_case(name)}")

@@ -137,9 +137,13 @@ class RustGenerator:
             if actual_type.startswith("Option<"):
                 actual_type = actual_type[7:-1]
 
-            # 跳过包含 serde_json::Value 的类型（无法序列化为查询参数）
+            # 跳过无法序列化为查询参数的类型
             if "serde_json::Value" in actual_type:
                 lines.append(f"        // 跳过: {original_name} 类型为 {actual_type}")
+                continue
+            # 跳过嵌套数组 Vec<Vec<...>>
+            if actual_type.startswith("Vec<Vec<"):
+                lines.append(f"        // 跳过: {original_name} 嵌套数组类型")
                 continue
 
             is_simple = actual_type in simple_types
