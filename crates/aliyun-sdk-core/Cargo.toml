@@ -1,0 +1,17 @@
+[package]
+name = "aliyun-sdk-core"
+version = "0.1.0"
+edition = "2021"
+description = "阿里云 SDK 核心库"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+reqwest = { version = "0.12", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"
+uuid = { version = "1.0", features = ["v4"] }
+hmac = "0.12"
+sha1 = "0.10"
+base64 = "0.22"
+tokio = { version = "1", features = ["full"] }
